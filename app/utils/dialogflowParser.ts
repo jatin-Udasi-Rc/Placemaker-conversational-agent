@@ -11,19 +11,22 @@ type DialogflowValue = {
 };
 
 // This type is compatible with the actual Dialogflow response structure
-// Using a more flexible type to accommodate the Dialogflow response structure
-type DialogflowResponseMessage = any;
+// Using a more specific type to accommodate the Dialogflow response structure
+interface DialogflowResponseMessage {
+  // @ts-ignore - Using a more flexible type for ResponseType enum compatibility
+  responseType?: string | null | unknown;
+  text?: { text?: string[] } | null;
+  payload?: { 
+    fields?: Record<string, DialogflowValue> 
+  };
+  [key: string]: unknown; // Allow additional properties
+}
 
 // More specific type for internal use
 interface DialogflowTextResponse {
   responseType?: string;
   text?: { text?: string[] };
 }
-
-interface DialogflowPayloadResponse {
-  responseType?: string;
-  payload?: { fields?: Record<string, DialogflowValue> };
-};
 
 export interface Product {
   id: string;
@@ -190,7 +193,7 @@ export function extractProductsFromDialogflowResponse(responseMessages: Dialogfl
     // Process each payload response
     payloadResponses.forEach((payloadResponse, responseIndex) => {
       // Extract rich content from the nested structure
-      const richContentField = payloadResponse.payload?.fields.richContent;
+      const richContentField = payloadResponse.payload?.fields?.richContent;
       const richContentValues = extractListValue(richContentField);
 
       console.log(`Response ${responseIndex}: Rich content values length:`, richContentValues.length);

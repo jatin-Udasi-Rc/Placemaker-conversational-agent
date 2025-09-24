@@ -1,6 +1,7 @@
 'use client';
 
 import { ExternalLink, Package, Truck, CheckCircle } from 'lucide-react';
+import Image from 'next/image';
 
 interface Product {
   id: string;
@@ -49,10 +50,12 @@ export default function ProductCard({ product }: ProductCardProps) {
       {/* Product Image */}
       <div className="aspect-square bg-gray-100 rounded-t-lg overflow-hidden">
         {product.image_url ? (
-          <img
+          <Image
             src={product.image_url}
             alt={product.title}
             className="w-full h-full object-cover"
+            width={300}
+            height={300}
             onError={(e) => {
               const target = e.target as HTMLImageElement;
               target.style.display = 'none';
