@@ -7,14 +7,29 @@ import { extractProductsFromDialogflowResponse, extractTextFromDialogflowRespons
 let sessionClient: SessionsClient;
 
 try {
-  // Initialize using the environment variable that points to the service account key
+  // Create credentials object from environment variables
+  const credentials = {
+    type: process.env.GOOGLE_CLIENT_TYPE,
+    project_id: process.env.GOOGLE_PROJECT_ID,
+    private_key_id: process.env.GOOGLE_PRIVATE_KEY_ID,
+    private_key: process.env.GOOGLE_PRIVATE_KEY,
+    client_email: process.env.GOOGLE_CLIENT_EMAIL,
+    client_id: process.env.GOOGLE_CLIENT_ID,
+    auth_uri: process.env.GOOGLE_AUTH_URI,
+    token_uri: process.env.GOOGLE_TOKEN_URI,
+    auth_provider_x509_cert_url: process.env.GOOGLE_AUTH_PROVIDER_X509_CERT_URL,
+    client_x509_cert_url: process.env.GOOGLE_CLIENT_X509_CERT_URL,
+    universe_domain: process.env.GOOGLE_UNIVERSE_DOMAIN
+  };
+
+  // Initialize using the credentials object
   sessionClient = new SessionsClient({
-    keyFilename: process.env.GOOGLE_APPLICATION_CREDENTIALS,
+    credentials: credentials,
     projectId: process.env.GOOGLE_CLOUD_PROJECT_ID,
   });
 } catch (error) {
   console.error('Failed to initialize Dialogflow client:', error);
-  console.error('Please ensure GOOGLE_APPLICATION_CREDENTIALS and GOOGLE_CLOUD_PROJECT_ID are set correctly');
+  console.error('Please ensure all Google Cloud environment variables are set correctly');
 }
 
 export async function POST(req: NextRequest) {
