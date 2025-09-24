@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { SessionsClient } from '@google-cloud/dialogflow-cx';
 import { v4 as uuidv4 } from 'uuid';
+import { extractProductsFromDialogflowResponse, extractTextFromDialogflowResponse, Product } from '../../../utils/dialogflowParser';
 
 // Initialize the Dialogflow CX session client
 let sessionClient: SessionsClient;
@@ -47,14 +48,25 @@ export async function POST(req: NextRequest) {
     const location = process.env.GOOGLE_CLOUD_LOCATION || 'global';
     const sessionPath = `projects/${projectId}/locations/${location}/agents/${agentId}/sessions/${sessionId}`;
 
-    // Create the request object
+    // Create the request object for Dialogflow CX
     const request = {
       session: sessionPath,
       queryInput: {
         text: {
           text: message,
-          languageCode: 'en-US', // or your preferred language
         },
+        languageCode: 'en', // Dialogflow CX uses 'en' instead of 'en-US'
+      },
+      // Add query parameters to request more products
+      queryParams: {
+        parameters: {
+          fields: {
+            max_products: {
+              numberValue: 5, // Request 5 products
+              kind: 'numberValue'
+            }
+          }
+        }
       },
     };
 
@@ -68,13 +80,19 @@ export async function POST(req: NextRequest) {
     const responses = await sessionClient.detectIntent(request);
     const result = responses[0].queryResult;
 
-    console.log('Dialogflow response:', {
-      intent: result?.intent?.displayName,
-      fulfillmentText: result?.fulfillmentText?.substring(0, 100),
-    });
-
-    // Extract the response text
-    const responseMessage = result?.fulfillmentText || 'I apologize, but I couldn\'t process your request right now.';
+    // Extract the response text and products using utility functions
+    let responseMessage = 'I apologize, but I couldn\'t process your request right now.';
+    let products: Product[] = [];
+    
+    if (result?.responseMessages && result.responseMessages.length > 0) {
+      // Extract text response
+      responseMessage = extractTextFromDialogflowResponse(result.responseMessages);
+      
+      // Extract products from rich content
+      products = extractProductsFromDialogflowResponse(result.responseMessages);
+      
+      console.log(`Extracted ${products.length} products from response`);
+    }
 
     // You can also extract other information from the response
     const intent = result?.intent?.displayName;
@@ -85,11 +103,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       message: responseMessage,
       intent,
+      actualResponse: result?.responseMessages,
       parameters,
       confidence,
-      // For now, we'll return empty products array since this is Dialogflow
-      // You can enhance this later to integrate with your product catalog
-      products: [],
+      products, // Return the extracted products from rich content
     });
 
   } catch (error) {

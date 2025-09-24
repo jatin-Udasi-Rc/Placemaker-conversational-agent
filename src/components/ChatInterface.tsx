@@ -2,6 +2,21 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { Send, Bot, User, Loader2 } from 'lucide-react';
+import ProductCard from './ProductCard';
+import { formatResponseText } from '../utils/textFormatter';
+
+interface Product {
+  id: string;
+  title: string;
+  description: string;
+  product_url: string;
+  image_url: string;
+  availability: boolean;
+  unit_of_measure: string;
+  keywords: string[];
+  delivery_options: string[];
+  categories: Array<Array<{ name: string; id: string }>>;
+}
 
 interface Message {
   id: string;
@@ -10,6 +25,7 @@ interface Message {
   timestamp: Date;
   intent?: string;
   confidence?: number;
+  products?: Product[];
 }
 
 export default function ChatInterface() {
@@ -63,15 +79,20 @@ export default function ChatInterface() {
         throw new Error(data.error || 'Failed to get response');
       }
 
+      console.log('API response data:', data);
+      console.log('Products received:', data.products);
+
       const botMessage: Message = {
         id: (Date.now() + 1).toString(),
         text: data.message,
         sender: 'bot',
         timestamp: new Date(),
         intent: data.intent,
-        confidence: data.confidence
+        confidence: data.confidence,
+        products: data.products || []
       };
 
+      console.log('Bot message created:', botMessage);
       setMessages(prev => [...prev, botMessage]);
     } catch (error) {
       console.error('Error calling chat API:', error);
@@ -137,7 +158,13 @@ export default function ChatInterface() {
                         : 'bg-white text-gray-900 border border-gray-200'
                       }`}
                   >
-                    <p className="text-sm">{message.text}</p>
+                    {message.sender === 'bot' ? (
+                      <div className="text-sm">
+                        {formatResponseText(message.text)}
+                      </div>
+                    ) : (
+                      <p className="text-sm">{message.text}</p>
+                    )}
                   </div>
                   
                   {/* Show intent and confidence for bot messages in development */}
@@ -159,6 +186,27 @@ export default function ChatInterface() {
                 </div>
               </div>
             </div>
+
+            {/* Product Cards */}
+            {message.sender === 'bot' && message.products && message.products.length > 0 && (
+              <div className="mt-4 ml-8 max-w-4xl">
+                <div className="text-sm text-gray-700 font-medium mb-3">
+                  Found {message.products.length} product{message.products.length > 1 ? 's' : ''} that might interest you:
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {message.products.map((product) => {
+                    console.log('Rendering product card for:', product);
+                    return <ProductCard key={product.id} product={product} />;
+                  })}
+                </div>
+              </div>
+            )}
+            {/* Debug: Show when no products */}
+            {message.sender === 'bot' && (!message.products || message.products.length === 0) && (
+              <div className="mt-2 ml-8 text-xs text-gray-400">
+                No products in this response (products: {message.products ? message.products.length : 'undefined'})
+              </div>
+            )}
           </div>
         ))}
 
