@@ -21,15 +21,19 @@ npm install
 
 ### 2. Service Account Configuration
 
-**Option A: Using Service Account Key File (Recommended for Local Development)**
+**IMPORTANT SECURITY NOTE:**
+Service account keys contain sensitive credentials and should NEVER be committed to version control. The `service-account-key.json` file is already added to `.gitignore` to prevent accidental commits.
+
+**Option A: Using Service Account Key File (Recommended for Local Development Only)**
 
 1. Download the service account key file from Google Cloud Console
-2. Place it in the project root as `service-account-key.json`
+2. Place it in the project root as `service-account-key.json` (this file is gitignored)
 3. Make sure the service account has "Dialogflow API Client" role
+4. Use the provided `service-account-key.example.json` as a template
 
 **Option B: Using Environment Variables (Recommended for Production)**
 
-1. Create a `.env.local` file with:
+1. Create a `.env.local` file with (this file is gitignored):
    ```
    GOOGLE_PROJECT_ID=commerce-tools-b2b-services
    GOOGLE_CLIENT_EMAIL=your-service-account@commerce-tools-b2b-services.iam.gserviceaccount.com
@@ -75,7 +79,8 @@ placemakers-conversational-chat/
 │       └── Navbar.tsx            # PlaceMakers navigation
 ├── package.json
 ├── tailwind.config.ts
-└── service-account-key.json      # (Add this file)
+├── service-account-key.json      # (Add this file, gitignored)
+└── service-account-key.example.json  # Template for service account key
 ```
 
 ## API Endpoint
@@ -123,6 +128,11 @@ Configure additional intents in your Dialogflow agent:
 1. **Authentication Error**: Ensure your service account key is valid and has proper permissions
 2. **Project ID Mismatch**: Verify the project ID matches your Dialogflow agent
 3. **CORS Issues**: The API route handles CORS automatically for Next.js
+4. **GitHub Push Protection**: If you accidentally commit the service account key file, GitHub will block the push due to security concerns. To resolve:
+   - Remove the file from git tracking with `git rm --cached service-account-key.json`
+   - Add the file to `.gitignore`
+   - Commit these changes
+   - For more details, see [GitHub's documentation on push protection](https://docs.github.com/code-security/secret-scanning/working-with-secret-scanning-and-push-protection/working-with-push-protection-from-the-command-line#resolving-a-blocked-push)
 
 ### Debug Mode
 
